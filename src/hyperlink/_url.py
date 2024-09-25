@@ -1019,6 +1019,8 @@ class URL(object):
                 )
 
         _, self._host = parse_host(_textcheck("host", host, "/?#@"))
+        # Compute only if needed
+        self._host_is_ipv6_literal = None
         if isinstance(path, Text):
             raise TypeError(
                 "expected iterable of text for path, not: %r" % (path,)
@@ -1187,6 +1189,22 @@ class URL(object):
         The user portion of :attr:`~hyperlink.URL.userinfo`.
         """
         return self.userinfo.split(u":")[0]
+
+    @property
+    def _host_idna_error(self):
+        # type: () -> bool
+        """Whether idna can encode the host
+
+        idna does not encode empty strings and ipv6 addresses.
+        This is by design.
+        """
+        if self._host_is_ipv6_literal is None:
+            try:
+                socket.inet_pton(socket.AF_INET6, self.host)
+                self._host_is_ipv6_literal = True
+            except OSError:
+                self._host_is_ipv6_literal = False
+        return self._host_is_ipv6_literal or not self.host
 
     def authority(self, with_password=False, **kw):
         # type: (bool, Any) -> Text
@@ -1669,7 +1687,7 @@ class URL(object):
         )
         new_host = (
             self.host
-            if not self.host
+            if self._host_idna_error
             else idna_encode(self.host, uts46=True).decode("ascii")
         )
         return self.replace(
