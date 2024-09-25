@@ -1019,8 +1019,6 @@ class URL(object):
                 )
 
         _, self._host = parse_host(_textcheck("host", host, "/?#@"))
-        # Compute only if needed
-        self._host_is_ipv6_literal = None
         if isinstance(path, Text):
             raise TypeError(
                 "expected iterable of text for path, not: %r" % (path,)
@@ -1198,7 +1196,7 @@ class URL(object):
         idna does not encode empty strings and ipv6 addresses.
         This is by design.
         """
-        if self._host_is_ipv6_literal is None:
+        if not hasattr(self, "_host_is_ipv6_literal"):
             try:
                 socket.inet_pton(socket.AF_INET6, self.host)
                 self._host_is_ipv6_literal = True
