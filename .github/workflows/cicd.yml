@@ -209,6 +209,7 @@ jobs:
               py_test="py${py/./}";  # Add "py" prefix, remove "."
           fi;
           env_test="test-${py_test}-coverage_xml";
+          cat $env_test;
           echo "Test environment: ${env_test}";
           tox -e "${env_test}";
           tar cvzf pytest-logs.tgz ".tox/${env_test}/log";
